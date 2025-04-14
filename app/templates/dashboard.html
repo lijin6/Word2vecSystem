@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}分析仪表盘{% endblock %}
+
+{% block styles %}
+<style>
+    .stat-card {
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+    }
+    .stat-card .card-body {
+        padding: 1.5rem;
+    }
+    .stat-card h5 {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 0.5rem;
+    }
+    .stat-card h2 {
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        height: 100%;
+    }
+    .recent-table {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .recent-table .table {
+        margin-bottom: 0;
+    }
+    .text-truncate {
+        max-width: 200px;
+    }
+    .badge-pill {
+        border-radius: 10px;
+        padding: 0.35em 0.65em;
+    }
+    .card-header {
+        background: white;
+        border-bottom: none;
+        padding: 1.25rem 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-start-lg border-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-primary">今日分析</h5>
+                            <h2 class="text-dark">128</h2>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-bar-chart text-primary fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-success fw-bold">↑ 12.5%</span>
+                        <span class="text-muted ms-2">较昨日</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-start-lg border-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-success">正面评价</h5>
+                            <h2 class="text-dark">86</h2>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-emoji-smile text-success fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-success fw-bold">↑ 8.2%</span>
+                        <span class="text-muted ms-2">较上周</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-start-lg border-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-danger">负面评价</h5>
+                            <h2 class="text-dark">42</h2>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-emoji-frown text-danger fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-danger fw-bold">↓ 5.3%</span>
+                        <span class="text-muted ms-2">较上周</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-start-lg border-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-warning">模型准确率</h5>
+                            <h2 class="text-dark">92.5%</h2>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-speedometer2 text-warning fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-success fw-bold">↑ 2.1%</span>
+                        <span class="text-muted ms-2">上月优化</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表区 -->
+    <div class="row mb-4">
+        <div class="col-xl-8 mb-4">
+            <div class="card chart-container">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">情感趋势分析</h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary active">近7天</button>
+                        <button class="btn btn-outline-secondary">近30天</button>
+                        <button class="btn btn-outline-secondary">本年</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="trendChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 mb-4">
+            <div class="card chart-container">
+                <div class="card-header">
+                    <h5 class="mb-0">情感分布比例</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="distributionChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近记录 -->
+    <div class="card recent-table">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">最近分析记录</h5>
+            <div>
+                <a href="/history" class="btn btn-sm btn-outline-primary me-2">
+                    <i class="bi bi-clock-history me-1"></i>查看全部
+                </a>
+                <button class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>新建分析
+                </button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th width="80px">ID</th>
+                        <th>文本内容</th>
+                        <th width="120px">情感倾向</th>
+                        <th width="150px">置信度</th>
+                        <th width="150px">时间</th>
+                        <th width="80px">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#1001</td>
+                        <td class="text-truncate" title="服务态度很好，非常满意，下次还会再来">服务态度很好，非常满意...</td>
+                        <td><span class="badge bg-success bg-opacity-10 text-success badge-pill">正面</span></td>
+                        <td>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 92%"></div>
+                            </div>
+                            <small class="text-muted">92%</small>
+                        </td>
+                        <td>2025-05-15 14:30</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>#1000</td>
+                        <td class="text-truncate" title="房间设施陈旧，需要改进，卫生状况一般">房间设施陈旧，需要改进...</td>
+                        <td><span class="badge bg-danger bg-opacity-10 text-danger badge-pill">负面</span></td>
+                        <td>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 85%"></div>
+                            </div>
+                            <small class="text-muted">85%</small>
+                        </td>
+                        <td>2025-05-15 13:45</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>#999</td>
+                        <td class="text-truncate" title="整体体验一般，没有特别突出的地方">整体体验一般，没有特别...</td>
+                        <td><span class="badge bg-secondary bg-opacity-10 text-secondary badge-pill">中性</span></td>
+                        <td>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 78%"></div>
+                            </div>
+                            <small class="text-muted">78%</small>
+                        </td>
+                        <td>2025-05-15 11:20</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white">
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">上一页</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">下一页</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // 情感趋势图
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: ['5月9日', '5月10日', '5月11日', '5月12日', '5月13日', '5月14日', '5月15日'],
+            datasets: [{
+                label: '正面评价',
+                data: [72, 68, 75, 80, 78, 83, 86],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.05)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            }, {
+                label: '负面评价',
+                data: [28, 35, 32, 30, 38, 40, 42],
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.05)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // 情感分布图
+    const distCtx = document.getElementById('distributionChart').getContext('2d');
+    new Chart(distCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['非常正面', '正面', '中性', '负面', '非常负面'],
+            datasets: [{
+                data: [25, 40, 10, 15, 10],
+                backgroundColor: [
+                    '#155724',
+                    '#28a745',
+                    '#ffc107',
+                    '#dc3545',
+                    '#721c24'
+                ],
+                borderWidth: 0,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

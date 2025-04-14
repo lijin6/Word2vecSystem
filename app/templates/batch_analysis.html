@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}批量分析{% endblock %}
+
+{% block styles %}
+<style>
+    .analysis-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .model-btn.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+    .text-truncate {
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .progress-container {
+        height: 4px;
+        margin-top: 10px;
+    }
+    #fileUploadLabel {
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    #fileUploadLabel:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card analysis-card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="bi bi-collection me-2"></i>批量情感分析
+            </h5>
+        </div>
+        <div class="card-body">
+            <!-- 输入区域 -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">
+                    <i class="bi bi-text-paragraph me-1"></i>输入多个文本（每行一个）
+                </label>
+                <textarea class="form-control" id="batchInput" rows="5" 
+                          placeholder="请输入需要分析的文本，每行一个..."></textarea>
+                
+                <div class="mt-3">
+                    <label id="fileUploadLabel" class="d-flex align-items-center p-2 border rounded">
+                        <i class="bi bi-upload fs-4 me-2"></i>
+                        <span>或点击上传文本文件（.txt）</span>
+                        <input type="file" class="d-none" id="fileUpload" accept=".txt">
+                    </label>
+                    <small class="text-muted">支持UTF-8编码的文本文件</small>
+                </div>
+            </div>
+
+            <!-- 控制区域 -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="btn-group w-100" role="group" id="modelSelector">
+                        <button type="button" class="btn btn-outline-primary model-btn active" 
+                                data-model="svm">
+                            <i class="bi bi-shield-check me-1"></i>SVM模型
+                        </button>
+                        <button type="button" class="btn btn-outline-primary model-btn" 
+                                data-model="xgb">
+                            <i class="bi bi-lightning-charge me-1"></i>XGBoost模型
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <button class="btn btn-primary w-100" id="analyzeBtn">
+                        <i class="bi bi-play-circle me-2"></i>开始分析
+                    </button>
+                </div>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-container d-none" id="progressContainer">
+                <div class="progress">
+                    <div id="analysisProgress" class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%"></div>
+                </div>
+                <div class="text-end mt-1">
+                    <small id="progressText">准备分析...</small>
+                </div>
+            </div>
+
+            <!-- 结果展示 -->
+            <div id="batchResults" class="d-none mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0">
+                        <i class="bi bi-table me-2"></i>分析结果
+                        <small class="text-muted ms-2" id="resultCount"></small>
+                    </h6>
+                    <div>
+                        <button class="btn btn-sm btn-outline-danger me-2" id="clearResults">
+                            <i class="bi bi-trash me-1"></i>清除
+                        </button>
+                        <button class="btn btn-sm btn-success" id="exportResults">
+                            <i class="bi bi-download me-1"></i>导出
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="50px">#</th>
+                                <th>文本内容</th>
+                                <th width="100px">情感倾向</th>
+                                <th width="100px">置信度</th>
+                                <th width="80px">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultBody">
+                            <!-- 结果动态插入 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 模型选择切换
+    document.querySelectorAll('#modelSelector .model-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#modelSelector .model-btn').forEach(b => {
+                b.classList.remove('active');
+                b.classList.add('btn-outline-primary');
+            });
+            this.classList.add('active');
+            this.classList.remove('btn-outline-primary');
+        });
+    });
+
+    // 文件上传处理
+    document.getElementById('fileUpload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('batchInput').value = e.target.result;
+        };
+        reader.readAsText(file);
+    });
+
+    // 分析按钮点击事件
+    document.getElementById('analyzeBtn').addEventListener('click', batchAnalyze);
+    
+    // 清除结果
+    document.getElementById('clearResults').addEventListener('click', function() {
+        document.getElementById('batchResults').classList.add('d-none');
+        document.getElementById('batchInput').value = '';
+    });
+
+    // 导出结果
+    document.getElementById('exportResults').addEventListener('click', exportResults);
+});
+
+async function batchAnalyze() {
+    const texts = document.getElementById('batchInput').value
+        .split('\n')
+        .map(t => t.trim())
+        .filter(t => t);
+    
+    const modelType = document.querySelector('#modelSelector .active').dataset.model;
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const progressBar = document.getElementById('analysisProgress');
+    const progressText = document.getElementById('progressText');
+    const progressContainer = document.getElementById('progressContainer');
+
+    if (texts.length === 0) {
+        alert('请输入至少一个有效文本');
+        return;
+    }
+
+    // 准备状态
+    analyzeBtn.disabled = true;
+    analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>分析中...';
+    progressContainer.classList.remove('d-none');
+    progressBar.style.width = '0%';
+    progressText.textContent = '准备分析...';
+
+    try {
+        const response = await fetch('/batch-analyze', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                texts: texts,
+                model_type: modelType
+            })
+        });
+
+        // 更新进度
+        progressBar.style.width = '50%';
+        progressText.textContent = '正在处理结果...';
+
+        if (!response.ok) {
+            throw new Error(`请求失败: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.error || '分析失败');
+        }
+
+        // 渲染结果
+        renderResults(data.results, texts);
+        
+        // 完成状态
+        progressBar.style.width = '100%';
+        progressText.textContent = `分析完成 (${data.results.length}/${texts.length})`;
+        
+    } catch (error) {
+        console.error('分析错误:', error);
+        alert(`分析失败: ${error.message}`);
+        progressText.textContent = '分析失败';
+        progressBar.classList.remove('progress-bar-animated');
+        progressBar.classList.add('bg-danger');
+    } finally {
+        setTimeout(() => {
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = '<i class="bi bi-play-circle me-2"></i>开始分析';
+        }, 500);
+    }
+}
+
+function renderResults(results, originalTexts) {
+    const tbody = document.getElementById('resultBody');
+    tbody.innerHTML = '';
+    
+    let successCount = 0;
+    
+    results.forEach((result, index) => {
+        if (!result || result.error) return;
+        
+        successCount++;
+        const sentiment = result.sentiment || 'neutral';
+        const confidence = (result.probabilities ? 
+                           (result.probabilities[sentiment] * 100).toFixed(1) : 
+                           (result.confidence * 100).toFixed(1)) + '%';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td class="text-truncate" title="${originalTexts[index]}">
+                ${originalTexts[index]}
+            </td>
+            <td>
+                <span class="badge ${getSentimentBadgeClass(sentiment)}">
+                    ${getSentimentLabel(sentiment)}
+                </span>
+            </td>
+            <td>${confidence}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" 
+                        onclick="reanalyzeSingle(${index})">
+                    <i class="bi bi-arrow-repeat"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    document.getElementById('resultCount').textContent = `成功: ${successCount}/${results.length}`;
+    document.getElementById('batchResults').classList.remove('d-none');
+}
+
+function getSentimentBadgeClass(sentiment) {
+    return {
+        'positive': 'bg-success',
+        'negative': 'bg-danger',
+        'neutral': 'bg-secondary'
+    }[sentiment] || 'bg-secondary';
+}
+
+function getSentimentLabel(sentiment) {
+    return {
+        'positive': '正面',
+        'negative': '负面',
+        'neutral': '中性'
+    }[sentiment] || '未知';
+}
+
+function exportResults() {
+    alert('导出功能将在实际项目中实现');
+}
+
+function reanalyzeSingle(index) {
+    alert(`将重新分析第 ${index + 1} 条文本`);
+    // 实际项目中这里可以调用单独的API重新分析
+}
+</script>
+{% endblock %}

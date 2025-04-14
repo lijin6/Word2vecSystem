@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情感分析图表</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>情感分析可视化图表</h1>
+        <img src="data:image/png;base64,{{ image }}" alt="情感分析图表" class="img-fluid">
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary mt-3">返回主页</a>
+    </div>
+</body>
+</html>

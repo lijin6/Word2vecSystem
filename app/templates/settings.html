@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+
+{% block title %}系统设置{% endblock %}
+
+{% block styles %}
+<style>
+    .settings-container {
+        max-width: 1000px;
+    }
+    .settings-card {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .nav-settings .nav-link {
+        color: #495057;
+        border-left: 3px solid transparent;
+        padding: 0.75rem 1.25rem;
+    }
+    .nav-settings .nav-link.active {
+        border-left-color: #0d6efd;
+        background-color: #f8f9fa;
+        font-weight: 500;
+    }
+    .nav-settings .nav-link:hover:not(.active) {
+        background-color: #f1f1f1;
+    }
+    .model-badge {
+        font-size: 0.75rem;
+    }
+    .api-key {
+        font-family: monospace;
+        background-color: #f8f9fa;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+    }
+    .integration-logo {
+        height: 40px;
+        width: auto;
+        margin-right: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container settings-container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="bi bi-gear me-2"></i>系统设置
+        </h2>
+        <div class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>最后更新: {{ current_time }}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-3">
+            <div class="card settings-card mb-4">
+                <div class="list-group list-group-flush nav-settings">
+                    <a href="#general" class="list-group-item list-group-item-action nav-link active" 
+                       data-bs-toggle="tab">
+                        <i class="bi bi-sliders me-2"></i>常规设置
+                    </a>
+                    <a href="#models" class="list-group-item list-group-item-action nav-link" 
+                       data-bs-toggle="tab">
+                        <i class="bi bi-robot me-2"></i>模型管理
+                    </a>
+                    <a href="#api" class="list-group-item list-group-item-action nav-link" 
+                       data-bs-toggle="tab">
+                        <i class="bi bi-plug me-2"></i>API集成
+                    </a>
+                    <a href="#users" class="list-group-item list-group-item-action nav-link" 
+                       data-bs-toggle="tab">
+                        <i class="bi bi-people me-2"></i>用户权限
+                    </a>
+                    <a href="#backup" class="list-group-item list-group-item-action nav-link" 
+                       data-bs-toggle="tab">
+                        <i class="bi bi-cloud-arrow-down me-2"></i>数据备份
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card settings-card">
+                <div class="card-body text-center">
+                    <div class="avatar-lg mx-auto mb-3">
+                        <div class="avatar-title bg-light rounded-circle">
+                            <i class="bi bi-shield-lock text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                    <h5>系统安全状态</h5>
+                    <div class="mb-2">
+                        <span class="badge bg-success">受保护</span>
+                    </div>
+                    <p class="text-muted small">所有设置已加密存储</p>
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-shield-check me-1"></i>安全检查
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- 常规设置 -->
+                <div class="tab-pane fade show active" id="general">
+                    <div class="card settings-card mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-sliders me-2"></i>常规设置
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form>
+                                <div class="mb-3">
+                                    <label class="form-label">系统名称</label>
+                                    <input type="text" class="form-control" value="情感分析系统">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">时区设置</label>
+                                    <select class="form-select">
+                                        <option>(UTC+08:00) 北京，香港，新加坡</option>
+                                        <option>(UTC+00:00) 伦敦</option>
+                                        <option>(UTC-05:00) 纽约</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">默认分析模型</label>
+                                    <select class="form-select">
+                                        <option>SVM (默认)</option>
+                                        <option>XGBoost</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="autoUpdateCheck" checked>
+                                        <label class="form-check-label" for="autoUpdateCheck">启用自动更新</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="dataCollectionCheck">
+                                        <label class="form-check-label" for="dataCollectionCheck">参与匿名数据收集</label>
+                                    </div>
+                                    <small class="text-muted">帮助我们改进产品体验</small>
+                                </div>
+                                
+                                <div class="d-flex justify-content-end mt-4">
+                                    <button type="button" class="btn btn-light me-2">取消</button>
+                                    <button type="submit" class="btn btn-primary">保存设置</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card settings-card">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-bell me-2"></i>通知设置
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form>
+                                <div class="mb-3">
+                                    <label class="form-label">邮件通知</label>
+                                    <input type="email" class="form-control" value="admin@example.com">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">通知类型</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="systemAlertCheck" checked>
+                                        <label class="form-check-label" for="systemAlertCheck">系统警报</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="analysisCompleteCheck" checked>
+                                        <label class="form-check-label" for="analysisCompleteCheck">分析完成</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="modelUpdateCheck">
+                                        <label class="form-check-label" for="modelUpdateCheck">模型更新</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-end mt-4">
+                                    <button type="button" class="btn btn-light me-2">测试通知</button>
+                                    <button type="submit" class="btn btn-primary">保存设置</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模型管理 -->
+                <div class="tab-pane fade" id="models">
+                    <div class="card settings-card mb-4">
+                        <div class="card-header bg-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-robot me-2"></i>模型管理
+                                </h5>
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-plus-lg me-1"></i>添加模型
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>模型名称</th>
+                                            <th>类型</th>
+                                            <th>状态</th>
+                                            <th>版本</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-shield-check text-primary me-2"></i>
+                                                    <strong>SVM情感分析</strong>
+                                                </div>
+                                            </td>
+                                            <td>支持向量机</td>
+                                            <td><span class="badge bg-success">已激活</span></td>
+                                            <td>v2.1.0</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-secondary me-1">配置</button>
+                                                <button class="btn btn-sm btn-outline-danger">停用</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-lightning-charge text-warning me-2"></i>
+                                                    <strong>XGBoost情感分析</strong>
+                                                </div>
+                                            </td>
+                                            <td>梯度提升树</td>
+                                            <td><span class="badge bg-success">已激活</span></td>
+                                            <td>v1.8.2</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-secondary me-1">配置</button>
+                                                <button class="btn btn-sm btn-outline-danger">停用</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-cpu text-info me-2"></i>
+                                                    <strong>BERT情感分析</strong>
+                                                </div>
+                                            </td>
+                                            <td>深度学习</td>
+                                            <td><span class="badge bg-secondary">未激活</span></td>
+                                            <td>v3.0.0-beta</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary me-1">激活</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card settings-card">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-arrow-repeat me-2"></i>模型训练
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form>
+                                <div class="mb-3">
+                                    <label class="form-label">训练数据集</label>
+                                    <select class="form-select">
+                                        <option>中文情感数据集 v2024</option>
+                                        <option>电商评论数据集 v2023</option>
+                                        <option>社交媒体数据集 v2024</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">训练参数</label>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">学习率</label>
+                                            <input type="number" step="0.001" class="form-control" value="0.01">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">迭代次数</label>
+                                            <input type="number" class="form-control" value="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enableGpuCheck" checked>
+                                        <label class="form-check-label" for="enableGpuCheck">启用GPU加速</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-end mt-4">
+                                    <button type="button" class="btn btn-light me-2">取消</button>
+                                    <button type="submit" class="btn btn-primary">开始训练</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API集成 -->
+                <div class="tab-pane fade" id="api">
+                    <div class="card settings-card mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-key me-2"></i>API密钥
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                请妥善保管您的API密钥，不要泄露给未经授权的人员
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">主API密钥</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control api-key" value="sk_live_1234567890abcdef" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" id="copyApiKey">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" type="button">
+                                        <i class="bi bi-arrow-clockwise"></i> 重置
+                                    </button>
+                                </div>
+                                <small class="text-muted">拥有完全访问权限的主密钥</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">API请求限制</label>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">每分钟请求数</label>
+                                        <input type="number" class="form-control" value="60">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">每天请求数</label>
+                                        <input type="number" class="form-control" value="5000">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end mt-4">
+                                <button type="button" class="btn btn-light me-2">取消</button>
+                                <button type="submit" class="btn btn-primary">保存设置</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card settings-card">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-plug me-2"></i>第三方集成
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <img src="https://via.placeholder.com/40x40?text=Z" alt="Zapier" class="integration-logo">
+                                    <div>
+                                        <h6 class="mb-0">Zapier</h6>
+                                        <small class="text-muted">自动化工作流集成</small>
+                                    </div>
+                                    <div class="ms-auto">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="zapierSwitch" checked>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="small text-muted">连接Zapier实现与5000+应用的自动化集成</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <img src="https://via.placeholder.com/40x40?text=S" alt="Slack" class="integration-logo">
+                                    <div>
+                                        <h6 class="mb-0">Slack</h6>
+                                        <small class="text-muted">团队通知集成</small>
+                                    </div>
+                                    <div class="ms-auto">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="slackSwitch">
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="small text-muted">将分析结果实时推送到Slack频道</p>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end mt-4">
+                                <button type="button" class="btn btn-light me-2">查看全部集成</button>
+                                <button type="submit" class="btn btn-primary">保存设置</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 其他标签页内容 (用户权限、数据备份) -->
+                <!-- 可以根据需要添加其他标签页的具体内容 -->
+                
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 复制API密钥功能
+    document.getElementById('copyApiKey').addEventListener('click', function() {
+        const apiKey = document.querySelector('.api-key');
+        navigator.clipboard.writeText(apiKey.value).then(() => {
+            const tooltip = new bootstrap.Tooltip(this, {
+                title: '已复制!',
+                trigger: 'manual'
+            });
+            tooltip.show();
+            setTimeout(() => tooltip.hide(), 1000);
+        });
+    });
+
+    // 切换标签页时更新URL哈希
+    const tabLinks = document.querySelectorAll('.nav-settings a[data-bs-toggle="tab"]');
+    tabLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            window.location.hash = this.getAttribute('href');
+        });
+    });
+
+    // 初始化时根据哈希值激活对应标签页
+    if (window.location.hash) {
+        const tabPane = document.querySelector(window.location.hash);
+        if (tabPane) {
+            const tabLink = document.querySelector(`.nav-settings a[href="${window.location.hash}"]`);
+            if (tabLink) {
+                new bootstrap.Tab(tabLink).show();
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
