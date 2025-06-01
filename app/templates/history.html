@@ -1,450 +1,158 @@
 {% extends "base.html" %}
-
 {% block title %}历史记录{% endblock %}
-
-{% block styles %}
-<style>
-    .history-container {
-        max-width: 1200px;
-    }
-    .history-card {
-        border-radius: 10px;
-    }
-    .sentiment-badge {
-        font-size: 0.75rem;
-        padding: 0.35em 0.65em;
-    }
-    .pagination .page-item.active .page-link {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-    }
-    .filter-controls {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-    }
-    .record-card {
-        transition: all 0.2s ease;
-        border-left: 4px solid transparent;
-    }
-    .record-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    }
-    .record-card.positive {
-        border-left-color: #28a745;
-    }
-    .record-card.negative {
-        border-left-color: #dc3545;
-    }
-    .confidence-bar {
-        height: 6px;
-        border-radius: 3px;
-        background-color: #e9ecef;
-    }
-    .confidence-progress {
-        height: 100%;
-        border-radius: 3px;
-    }
-    .text-preview {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container history-container py-4">
-    <!-- 页面标题和操作按钮 -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">
-            <i class="bi bi-clock-history me-2"></i>历史记录
-        </h2>
-        <div>
-            <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#exportModal">
-                <i class="bi bi-download me-1"></i>导出
-            </button>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
-                <i class="bi bi-funnel me-1"></i>筛选
-            </button>
-        </div>
+
+<h2 class="mb-4">情感分析历史记录</h2>
+
+<!-- 登录状态判断 -->
+{% if current_user.is_authenticated %}
+    <div id="history-container">
+        <p class="text-muted">加载中，请稍候...</p>
     </div>
-
-    <!-- 筛选条件展示 -->
-    <div class="filter-controls mb-4">
-        <div class="d-flex flex-wrap align-items-center">
-            <span class="me-3"><strong>当前筛选:</strong></span>
-            <span class="badge bg-light text-dark me-2 mb-2">
-                全部模型 <i class="bi bi-x ms-1"></i>
-            </span>
-            <span class="badge bg-light text-dark me-2 mb-2">
-                全部情感 <i class="bi bi-x ms-1"></i>
-            </span>
-            <span class="badge bg-light text-dark me-2 mb-2">
-                最近30天 <i class="bi bi-x ms-1"></i>
-            </span>
-            <span class="badge bg-light text-dark me-2 mb-2">
-                置信度 > 80% <i class="bi bi-x ms-1"></i>
-            </span>
-            <button class="btn btn-link btn-sm mb-2">清除所有</button>
-        </div>
+    
+    <script>
+        function fetchHistory() {
+            fetch("/api/history")
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById("history-container");
+                    if (!data.success) {
+                        container.innerHTML = `<p class="text-danger">加载失败: ${data.message}</p>`;
+                        return;
+                    }
+        
+                    const html = `
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>时间</th>
+                                    <th>文本</th>
+                                    <th>情绪</th>
+                                    <th>置信度</th>
+                                    <th>模型</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.items.map(item => `
+                                    <tr>
+                                        <td class="text-nowrap">${item.time}</td>
+                                        <td class="text-truncate" style="max-width: 300px;">${item.text}</td>
+                                        <td>
+                                            <span class="badge rounded-pill fs-6 ${
+                                                item.sentiment === 'positive' ? 'bg-success' : 'bg-danger'
+                                            }">
+                                                ${item.sentiment === 'positive' ? '正面' : '负面'}
+                                            </span>
+                                        </td>
+                                        <td>${(item.confidence * 100).toFixed(2)}%</td>
+                                        <td><span class="badge bg-primary">${item.model}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        
+                        <!-- 分页控件 -->
+                        <nav aria-label="分页导航">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item ${data.data.pagination.current_page <= 1 ? 'disabled' : ''}">
+                                    <a class="page-link" href="#" onclick="goToPage(${data.data.pagination.current_page - 1})">上一页</a>
+                                </li>
+                                ${Array.from({length: data.data.pagination.total_pages}, (_, i) => i + 1)
+                                    .map(p => `
+                                        <li class="page-item ${p === data.data.pagination.current_page ? 'active' : ''}">
+                                            <a class="page-link" href="#" onclick="goToPage(${p})">${p}</a>
+                                        </li>
+                                    `).join('')
+                                }
+                                <li class="page-item ${data.data.pagination.current_page >= data.data.pagination.total_pages ? 'disabled' : ''}">
+                                    <a class="page-link" href="#" onclick="goToPage(${data.data.pagination.current_page + 1})">下一页</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    `;
+                    container.innerHTML = html;
+                });
+        }
+        
+        // 初始加载
+        fetchHistory();
+        
+        // 每隔 5 秒刷新一次
+        setInterval(fetchHistory, 5000);
+        
+        // 分页函数
+        function goToPage(page) {
+            const url = `/api/history?page=${page}&per_page=10`;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    // 重新生成 HTML（和上面一样）
+                    const container = document.getElementById("history-container");
+                    if (!data.success) return;
+        
+                    const html = `
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>时间</th>
+                                    <th>文本</th>
+                                    <th>情绪</th>
+                                    <th>置信度</th>
+                                    <th>模型</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.data.items.map(item => `
+                                    <tr>
+                                        <td class="text-nowrap">${item.time}</td>
+                                        <td class="text-truncate" style="max-width: 300px;">${item.text}</td>
+                                        <td>
+                                            <span class="badge rounded-pill fs-6 ${
+                                                item.sentiment === 'positive' ? 'bg-success' : 'bg-danger'
+                                            }">
+                                                ${item.sentiment === 'positive' ? '正面' : '负面'}
+                                            </span>
+                                        </td>
+                                        <td>${(item.confidence * 100).toFixed(2)}%</td>
+                                        <td><span class="badge bg-primary">${item.model}</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        
+                        <!-- 更新分页控件 -->
+                        <nav aria-label="分页导航">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item ${data.data.pagination.current_page <= 1 ? 'disabled' : ''}">
+                                    <a class="page-link" href="#" onclick="goToPage(${data.data.pagination.current_page - 1})">上一页</a>
+                                </li>
+                                ${Array.from({length: data.data.pagination.total_pages}, (_, i) => i + 1)
+                                    .map(p => `
+                                        <li class="page-item ${p === data.data.pagination.current_page ? 'active' : ''}">
+                                            <a class="page-link" href="#" onclick="goToPage(${p})">${p}</a>
+                                        </li>
+                                    `).join('')
+                                }
+                                <li class="page-item ${data.data.pagination.current_page >= data.data.pagination.total_pages ? 'disabled' : ''}">
+                                    <a class="page-link" href="#" onclick="goToPage(${data.data.pagination.current_page + 1})">下一页</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    `;
+                    container.innerHTML = html;
+                });
+        }
+        </script>
+{% else %}
+    <div class="alert alert-warning text-center py-5">
+        <h4 class="alert-heading">请先登录</h4>
+        <p>您需要先登录才能查看历史记录。</p>
+        <hr>
+        <p class="mb-0">
+            <a href="{{ url_for('main.login') }}" class="btn btn-primary">立即登录</a>
+            <a href="{{ url_for('main.register') }}" class="btn btn-outline-secondary ms-2">注册账号</a>
+        </p>
     </div>
+{% endif %}
 
-    <!-- 统计摘要 -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 bg-light">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">总记录数</h6>
-                            <h4 class="mb-0">1,248</h4>
-                        </div>
-                        <i class="bi bi-stack text-primary" style="font-size: 1.5rem;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 bg-light">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">正面评价</h6>
-                            <h4 class="mb-0">874</h4>
-                        </div>
-                        <i class="bi bi-emoji-smile text-success" style="font-size: 1.5rem;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 bg-light">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">负面评价</h6>
-                            <h4 class="mb-0">374</h4>
-                        </div>
-                        <i class="bi bi-emoji-frown text-danger" style="font-size: 1.5rem;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 bg-light">
-                <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">平均置信度</h6>
-                            <h4 class="mb-0">88.2%</h4>
-                        </div>
-                        <i class="bi bi-check-circle text-info" style="font-size: 1.5rem;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 历史记录列表 -->
-    <div class="card history-card">
-        <div class="card-header bg-white">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">分析记录</h5>
-                <div class="text-muted small">
-                    显示 <span class="fw-bold">1-10</span> 条，共 <span class="fw-bold">1,248</span> 条
-                </div>
-            </div>
-        </div>
-        <div class="card-body p-0">
-            <div class="list-group list-group-flush">
-                <!-- 单条记录示例 - 正面 -->
-                <div class="list-group-item record-card positive">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <span class="badge sentiment-badge bg-success me-3">正面</span>
-                                <div class="text-preview">
-                                    <strong>这款产品非常好用，界面简洁操作流畅，客服响应也很快...</strong>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-light text-dark me-2">SVM</span>
-                                <small class="text-muted">v2.1</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="confidence-bar">
-                                <div class="confidence-progress bg-success" style="width: 92%"></div>
-                            </div>
-                            <small class="text-muted">92% 置信度</small>
-                        </div>
-                        <div class="col-md-2 text-end">
-                            <small class="text-muted">2024-03-15 14:30</small>
-                            <button class="btn btn-link btn-sm ms-2">
-                                <i class="bi bi-three-dots-vertical"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 单条记录示例 - 负面 -->
-                <div class="list-group-item record-card negative">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <span class="badge sentiment-badge bg-danger me-3">负面</span>
-                                <div class="text-preview">
-                                    <strong>非常失望，产品质量差，使用一周就出现故障，客服处理效率低下...</strong>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-light text-dark me-2">XGBoost</span>
-                                <small class="text-muted">v1.8</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="confidence-bar">
-                                <div class="confidence-progress bg-danger" style="width: 85%"></div>
-                            </div>
-                            <small class="text-muted">85% 置信度</small>
-                        </div>
-                        <div class="col-md-2 text-end">
-                            <small class="text-muted">2024-03-14 09:15</small>
-                            <button class="btn btn-link btn-sm ms-2">
-                                <i class="bi bi-three-dots-vertical"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 更多记录... -->
-                {% for i in range(8) %}
-                <div class="list-group-item record-card {% if i%2 %}positive{% else %}negative{% endif %}">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <span class="badge sentiment-badge {% if i%2 %}bg-success{% else %}bg-danger{% endif %} me-3">
-                                    {% if i%2 %}正面{% else %}负面{% endif %}
-                                </span>
-                                <div class="text-preview">
-                                    <strong>示例文本内容 {{i}} - {% if i%2 %}正面评价{% else %}负面评价{% endif %}</strong>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-light text-dark me-2">{% if i%3 %}SVM{% else %}XGBoost{% endif %}</span>
-                                <small class="text-muted">v{% if i%3 %}2.{% else %}1.{% endif %}{{i}}</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="confidence-bar">
-                                <div class="confidence-progress {% if i%2 %}bg-success{% else %}bg-danger{% endif %}" 
-                                     style="width: {% if i%2 %}{{80 + i*2}}{% else %}{{75 + i*3}}{% endif %}%"></div>
-                            </div>
-                            <small class="text-muted">
-                                {% if i%2 %}{{80 + i*2}}{% else %}{{75 + i*3}}{% endif %}% 置信度
-                            </small>
-                        </div>
-                        <div class="col-md-2 text-end">
-                            <small class="text-muted">2024-03-{{10+i}} {{10+i%12}}:{{i*5}}0</small>
-                            <button class="btn btn-link btn-sm ms-2">
-                                <i class="bi bi-three-dots-vertical"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        <div class="card-footer bg-white">
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1">上一页</a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">下一页</a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </div>
-</div>
-
-<!-- 筛选模态框 -->
-<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filterModalLabel">
-                    <i class="bi bi-funnel me-2"></i>筛选历史记录
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">情感类型</label>
-                            <select class="form-select" multiple>
-                                <option selected>全部</option>
-                                <option>正面</option>
-                                <option>负面</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">分析模型</label>
-                            <select class="form-select" multiple>
-                                <option selected>全部</option>
-                                <option>SVM</option>
-                                <option>XGBoost</option>
-                                <option>BERT</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">时间范围</label>
-                            <select class="form-select">
-                                <option>全部时间</option>
-                                <option selected>最近7天</option>
-                                <option>最近30天</option>
-                                <option>最近90天</option>
-                                <option>自定义范围</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">置信度</label>
-                            <select class="form-select">
-                                <option>全部</option>
-                                <option selected>大于80%</option>
-                                <option>大于90%</option>
-                                <option>小于50%</option>
-                            </select>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label">关键词搜索</label>
-                            <input type="text" class="form-control" placeholder="输入关键词...">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary">应用筛选</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 导出模态框 -->
-<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exportModalLabel">
-                    <i class="bi bi-download me-2"></i>导出历史记录
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="mb-3">
-                        <label class="form-label">导出格式</label>
-                        <select class="form-select">
-                            <option>CSV (Excel)</option>
-                            <option>JSON</option>
-                            <option>PDF 报告</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">数据范围</label>
-                        <select class="form-select">
-                            <option>当前筛选结果</option>
-                            <option>全部历史记录</option>
-                            <option>最近30天</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">包含字段</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="exportText" checked>
-                            <label class="form-check-label" for="exportText">分析文本</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="exportSentiment" checked>
-                            <label class="form-check-label" for="exportSentiment">情感分析结果</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="exportConfidence" checked>
-                            <label class="form-check-label" for="exportConfidence">置信度</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="exportModel">
-                            <label class="form-check-label" for="exportModel">分析模型</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="exportTime" checked>
-                            <label class="form-check-label" for="exportTime">分析时间</label>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">导出到</label>
-                        <select class="form-select">
-                            <option>下载文件</option>
-                            <option>发送到邮箱</option>
-                            <option>保存到云端</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary">开始导出</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 初始化筛选标签点击事件
-    document.querySelectorAll('.filter-controls .badge .bi-x').forEach(icon => {
-        icon.addEventListener('click', function() {
-            this.closest('.badge').remove();
-        });
-    });
-
-    // 记录卡片点击事件
-    document.querySelectorAll('.record-card').forEach(card => {
-        card.addEventListener('click', function(e) {
-            if (!e.target.closest('.btn')) {
-                // 实际项目中这里应该跳转到详情页
-                console.log('查看记录详情:', this.querySelector('.text-preview').textContent);
-            }
-        });
-    });
-
-    // 模拟加载更多数据
-    const loadMore = document.querySelector('.pagination .page-link[href="#"]');
-    if (loadMore) {
-        loadMore.addEventListener('click', function(e) {
-            e.preventDefault();
-            // 这里应该是AJAX加载更多数据的逻辑
-            console.log('加载下一页数据...');
-        });
-    }
-});
-</script>
 {% endblock %}

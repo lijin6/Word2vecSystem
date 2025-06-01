@@ -1,352 +1,157 @@
 {% extends "base.html" %}
-
-{% block title %}分析仪表盘{% endblock %}
-
+{% block title %}首页 - 基于Word2Vec的情感分析系统{% endblock %}
 {% block styles %}
 <style>
-    .stat-card {
+    .hero-section {
+        background: linear-gradient(to right, #1b2838, #171a21);
+        color: white;
+        padding: 60px 0;
+        text-align: center;
+    }
+    .feature-box {
         border-radius: 10px;
-        transition: all 0.3s ease;
-        border: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        padding: 2rem;
+        background: #fff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease;
     }
-    .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+    .feature-box:hover {
+        transform: translateY(-5px);
     }
-    .stat-card .card-body {
-        padding: 1.5rem;
+    .section-title {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+        font-weight: bold;
     }
-    .stat-card h5 {
-        font-size: 0.9rem;
-        opacity: 0.8;
-        margin-bottom: 0.5rem;
-    }
-    .stat-card h2 {
-        font-weight: 700;
-        margin-bottom: 0;
-    }
-    .chart-container {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        height: 100%;
-    }
-    .recent-table {
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .recent-table .table {
-        margin-bottom: 0;
-    }
-    .text-truncate {
-        max-width: 200px;
-    }
-    .badge-pill {
-        border-radius: 10px;
-        padding: 0.35em 0.65em;
-    }
-    .card-header {
-        background: white;
-        border-bottom: none;
-        padding: 1.25rem 1.5rem;
+    .footer-bottom {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e9ecef;
     }
 </style>
 {% endblock %}
-
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- 统计卡片 -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stat-card border-start-lg border-primary">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="text-primary">今日分析</h5>
-                            <h2 class="text-dark">128</h2>
-                        </div>
-                        <div class="bg-primary bg-opacity-10 p-3 rounded">
-                            <i class="bi bi-bar-chart text-primary fs-4"></i>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <span class="text-success fw-bold">↑ 12.5%</span>
-                        <span class="text-muted ms-2">较昨日</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stat-card border-start-lg border-success">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="text-success">正面评价</h5>
-                            <h2 class="text-dark">86</h2>
-                        </div>
-                        <div class="bg-success bg-opacity-10 p-3 rounded">
-                            <i class="bi bi-emoji-smile text-success fs-4"></i>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <span class="text-success fw-bold">↑ 8.2%</span>
-                        <span class="text-muted ms-2">较上周</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stat-card border-start-lg border-danger">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="text-danger">负面评价</h5>
-                            <h2 class="text-dark">42</h2>
-                        </div>
-                        <div class="bg-danger bg-opacity-10 p-3 rounded">
-                            <i class="bi bi-emoji-frown text-danger fs-4"></i>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <span class="text-danger fw-bold">↓ 5.3%</span>
-                        <span class="text-muted ms-2">较上周</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stat-card border-start-lg border-warning">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="text-warning">模型准确率</h5>
-                            <h2 class="text-dark">92.5%</h2>
-                        </div>
-                        <div class="bg-warning bg-opacity-10 p-3 rounded">
-                            <i class="bi bi-speedometer2 text-warning fs-4"></i>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <span class="text-success fw-bold">↑ 2.1%</span>
-                        <span class="text-muted ms-2">上月优化</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- 英雄区域 -->
+<div class="hero-section">
+    <div class="container">
+        <h1 class="display-4 fw-bold">基于 Word2Vec 的情感分析系统</h1>
+        <p class="lead mt-3">利用深度学习与自然语言处理技术，对文本进行精准情感倾向判断</p>
+        <a href="{{ url_for('main.single_analysis') }}" class="btn btn-primary btn-lg mt-4">
+            <i class="bi bi-play-circle me-2"></i>立即体验
+        </a>
+    </div>
+</div>
+
+<!-- 功能介绍 -->
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="section-title">我们的系统可以做什么？</h2>
+        <p class="text-muted">支持单条/批量分析，适用于评论监控、舆情分析、用户反馈整理等场景</p>
     </div>
 
-    <!-- 图表区 -->
-    <div class="row mb-4">
-        <div class="col-xl-8 mb-4">
-            <div class="card chart-container">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">情感趋势分析</h5>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-secondary active">近7天</button>
-                        <button class="btn btn-outline-secondary">近30天</button>
-                        <button class="btn btn-outline-secondary">本年</button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <canvas id="trendChart" height="300"></canvas>
-                </div>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="feature-box">
+                <h4 class="mb-3"><i class="bi bi-chat-dots text-primary me-2"></i>高精度情感识别</h4>
+                <p>通过 Word2Vec 向量建模 + SVM/XGBoost 模型，实现对正面、负面、中性情绪的准确判断。</p>
             </div>
         </div>
-        <div class="col-xl-4 mb-4">
-            <div class="card chart-container">
-                <div class="card-header">
-                    <h5 class="mb-0">情感分布比例</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="distributionChart" height="300"></canvas>
-                </div>
+        <div class="col-md-4">
+            <div class="feature-box">
+                <h4 class="mb-3"><i class="bi bi-gear-wide-connected text-success me-2"></i>灵活的模型选择</h4>
+                <p>支持多种机器学习模型切换，可实时查看不同模型的效果对比与置信度。</p>
             </div>
         </div>
-    </div>
-
-    <!-- 最近记录 -->
-    <div class="card recent-table">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">最近分析记录</h5>
-            <div>
-                <a href="/history" class="btn btn-sm btn-outline-primary me-2">
-                    <i class="bi bi-clock-history me-1"></i>查看全部
-                </a>
-                <button class="btn btn-sm btn-primary">
-                    <i class="bi bi-plus-circle me-1"></i>新建分析
-                </button>
+        <div class="col-md-4">
+            <div class="feature-box">
+                <h4 class="mb-3"><i class="bi bi-clock-history text-warning me-2"></i>历史记录追踪</h4>
+                <p>自动保存每一次分析结果，支持查看、搜索、导出等功能，便于后续数据复用与分析。</p>
             </div>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th width="80px">ID</th>
-                        <th>文本内容</th>
-                        <th width="120px">情感倾向</th>
-                        <th width="150px">置信度</th>
-                        <th width="150px">时间</th>
-                        <th width="80px">操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>#1001</td>
-                        <td class="text-truncate" title="服务态度很好，非常满意，下次还会再来">服务态度很好，非常满意...</td>
-                        <td><span class="badge bg-success bg-opacity-10 text-success badge-pill">正面</span></td>
-                        <td>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 92%"></div>
-                            </div>
-                            <small class="text-muted">92%</small>
-                        </td>
-                        <td>2025-05-15 14:30</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>#1000</td>
-                        <td class="text-truncate" title="房间设施陈旧，需要改进，卫生状况一般">房间设施陈旧，需要改进...</td>
-                        <td><span class="badge bg-danger bg-opacity-10 text-danger badge-pill">负面</span></td>
-                        <td>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-danger" role="progressbar" style="width: 85%"></div>
-                            </div>
-                            <small class="text-muted">85%</small>
-                        </td>
-                        <td>2025-05-15 13:45</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>#999</td>
-                        <td class="text-truncate" title="整体体验一般，没有特别突出的地方">整体体验一般，没有特别...</td>
-                        <td><span class="badge bg-secondary bg-opacity-10 text-secondary badge-pill">中性</span></td>
-                        <td>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 78%"></div>
-                            </div>
-                            <small class="text-muted">78%</small>
-                        </td>
-                        <td>2025-05-15 11:20</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="card-footer bg-white">
-            <nav aria-label="Page navigation">
-                <ul class="pagination pagination-sm justify-content-center mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1">上一页</a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">下一页</a>
-                    </li>
-                </ul>
-            </nav>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // 情感趋势图
-    const trendCtx = document.getElementById('trendChart').getContext('2d');
-    new Chart(trendCtx, {
-        type: 'line',
-        data: {
-            labels: ['5月9日', '5月10日', '5月11日', '5月12日', '5月13日', '5月14日', '5月15日'],
-            datasets: [{
-                label: '正面评价',
-                data: [72, 68, 75, 80, 78, 83, 86],
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40, 167, 69, 0.05)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true
-            }, {
-                label: '负面评价',
-                data: [28, 35, 32, 30, 38, 40, 42],
-                borderColor: '#dc3545',
-                backgroundColor: 'rgba(220, 53, 69, 0.05)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        drawBorder: false
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
-        }
-    });
+<!-- 技术架构 -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">系统架构</h2>
+            <p class="text-muted">基于 Flask 框架构建，后端提供 RESTful API，前端采用 Bootstrap 美化界面</p>
+        </div>
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <img src="../static/images/image.png" alt="系统架构图" class="img-fluid rounded shadow-sm">
+            </div>
+            <div class="col-md-6">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex align-items-center">
+                        <i class="bi bi-cpu fs-4 text-info me-3"></i>
+                        <strong>后端：</strong> &nbsp;Flask + SQLAlchemy + Flask-Login
+                    </li>
+                    <li class="list-group-item d-flex align-items-center">
+                        <i class="bi bi-braces-asterisk fs-4 text-danger me-3"></i>
+                        <strong>分析引擎：</strong> &nbsp;SVM / XGBoost / Word2Vec
+                    </li>
+                    <li class="list-group-item d-flex align-items-center">
+                        <i class="bi bi-database fs-4 text-warning me-3"></i>
+                        <strong>数据库：</strong> &nbsp;MySQL 存储分析记录与用户信息
+                    </li>
+                    <li class="list-group-item d-flex align-items-center">
+                        <i class="bi bi-palette fs-4 text-primary me-3"></i>
+                        <strong>前端：</strong> &nbsp;HTML + Bootstrap 5 + Chart.js 可视化
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
-    // 情感分布图
-    const distCtx = document.getElementById('distributionChart').getContext('2d');
-    new Chart(distCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['非常正面', '正面', '中性', '负面', '非常负面'],
-            datasets: [{
-                data: [25, 40, 10, 15, 10],
-                backgroundColor: [
-                    '#155724',
-                    '#28a745',
-                    '#ffc107',
-                    '#dc3545',
-                    '#721c24'
-                ],
-                borderWidth: 0,
-                borderRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            cutout: '70%',
-            plugins: {
-                legend: {
-                    position: 'right',
-                }
-            }
-        }
-    });
-</script>
+<!-- 使用方式 -->
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="section-title">如何使用</h2>
+        <p class="text-muted">三步完成情感分析，轻松上手</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-primary"><i class="bi bi-pencil me-2"></i>输入文本</h5>
+                    <p class="card-text">在“单文本分析”页面输入你想分析的语句，如商品评价、社交媒体内容等。</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-success"><i class="bi bi-arrow-repeat me-2"></i>选择模型</h5>
+                    <p class="card-text">可以选择不同的算法模型（SVM/XGBoost），并查看其预测结果与置信度。</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-danger"><i class="bi bi-bar-chart-line me-2"></i>获取结果</h5>
+                    <p class="card-text">系统返回情绪分类结果，并以图表形式展示整体趋势与分布情况。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 底部 -->
+<div class="container footer-bottom">
+    <div class="row">
+        <div class="col-md-6">
+            <h5>关于本系统</h5>
+            <p class="text-muted">这是一个基于 Python Flask 和 NLP 技术构建的情感分析平台，可用于电商评论、社交媒体、问卷调查等多种场景下的文本分析任务。</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="#" class="me-3"><i class="bi bi-github fs-3 text-dark"></i></a> 
+            <a href="#"><i class="bi bi-linkedin fs-3 text-dark"></i></a>
+        </div>
+    </div>
+</div>
 {% endblock %}

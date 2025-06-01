@@ -3,6 +3,10 @@ from datetime import datetime
 import traceback
 import logging
 from app.train import SentimentAnalyzerSVM, SentimentAnalyzerXGB
+from .models import User, AnalysisRecord
+from . import db
+from flask_login import login_user, logout_user, current_user,login_required
+
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -76,7 +80,6 @@ def analyze():
         # 获取原始分析结果
         raw_result = analyzer.predict_sentiment(text)
         
-      
         # 确保置信度存在且有效
         confidence = float(raw_result.get('confidence', 0))
         confidence = max(0.0, min(1.0, confidence * 1.2))  # 限制在0-1范围
@@ -98,13 +101,27 @@ def analyze():
                 'timestamp': datetime.now().isoformat()
             }
         }
-        
+
+        # ========== 新增：保存历史记录 ==========
+        if current_user.is_authenticated:
+            record = AnalysisRecord(
+                user_id=current_user.id,
+                text=text[:500],  # 截断防止字段过长
+                sentiment=response['data']['sentiment'],
+                confidence=confidence,
+                model_type=model_type.upper(),  # SVM/XGB
+                timestamp=datetime.now()
+            )
+            db.session.add(record)
+            db.session.commit()  # 提交事务
+
         # 再次调试检查
         print(f"最终返回数据: {response}")
         
         return jsonify(response)
 
     except Exception as e:
+        db.session.rollback()  # 回滚事务
         return jsonify({
             'success': False,
             'error': str(e),
@@ -271,43 +288,91 @@ def dashboard_data():
 
 @main.route('/api/history')
 def history_data():
-    """历史记录数据"""
     try:
         page = request.args.get('page', 1, type=int)
-        per_page = min(int(request.args.get('per_page', 10)), 50)
-        
-        mock_data = [
-            {
-                'id': i+1,
-                'text': f'示例文本{i} - {"正面评价" if i%2 else "负面评价"}',
-                'sentiment': 'positive' if i%2 else 'negative',
-                'confidence': round(0.9 + (i%10)/100 if i%2 else 0.8 + (i%10)/100, 2),
-                'model': 'SVM' if i%3 else 'XGB',
-                'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            } for i in range(45)
-        ]
-        
-        total_pages = (len(mock_data) + per_page - 1) // per_page
-        page = max(1, min(page, total_pages))
-        
+        per_page = min(request.args.get('per_page', 10), 50)
+
+        if not current_user.is_authenticated:
+            return jsonify({'success': False, 'error': '未登录'})
+
+        pagination = AnalysisRecord.query \
+            .filter_by(user_id=current_user.id) \
+            .order_by(AnalysisRecord.timestamp.desc()) \
+            .paginate(page=page, per_page=per_page, error_out=False)
+
+        items = [{
+            'id': r.id,
+            'text': r.text,
+            'sentiment': r.sentiment,
+            'confidence': r.confidence,
+            'model': r.model_type,
+            'time': r.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        } for r in pagination.items]
+
         return jsonify({
             'success': True,
             'data': {
-                'items': mock_data[(page-1)*per_page : page*per_page],
+                'items': items,
                 'pagination': {
                     'current_page': page,
                     'per_page': per_page,
-                    'total_pages': total_pages,
-                    'total_items': len(mock_data)
+                    'total_pages': pagination.pages,
+                    'total_items': pagination.total
                 }
             }
         })
+
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': '获取历史记录失败',
-            'message': str(e)
+            'error': str(e),
+            'message': '获取历史记录失败'
         }), 500
+        
+        
+@main.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+
+        if User.query.filter_by(username=username).first():
+            return "用户名已存在"
+
+        if User.query.filter_by(email=email).first():
+            return "邮箱已被注册"
+
+        user = User(username=username, email=email)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for('main.login'))
+
+    return render_template('register.html')
+
+
+@main.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+
+        if user and user.check_password(password):
+            login_user(user)
+            return redirect(url_for('main.dashboard'))
+        else:
+            return "登录失败，请检查用户名或密码"
+
+    return render_template('login.html')
+
+
+@main.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('main.index'))
+
 
 # ====================== 其他路由 ======================
 @main.route('/analysis')
